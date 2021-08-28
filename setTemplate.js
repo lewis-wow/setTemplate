@@ -11,9 +11,21 @@
     
                 const domTree = elemFromString(res);
                 const ids = getIds(domTree);
-                Array.from(domTree.querySelectorAll("script")).forEach(elem => {
-                    runScriptAsFunction(elem, props, domTree, ids);
-                });
+
+                window.local = {};
+
+                const globalScript = domTree.querySelector("script[global]");
+                if(globalScript) {
+                    const script = document.createElement("script");
+                    script.textContent = globalScript.textContent;
+                    script.dataset.global = true;
+                    globalScript.replaceWith(script);
+                }
+
+                const runAsFuncScript = domTree.querySelector("script:not([data-global='true'])");
+                if(runAsFuncScript) {
+                    runScriptAsFunction(runAsFuncScript, props, domTree, ids, window.local);
+                }
     
                 resolve(domTree);
         
@@ -21,11 +33,11 @@
         });
     }
     
-    function runScriptAsFunction(scriptElement, props, domTree, ids) {
+    function runScriptAsFunction(scriptElement, props, currentDom, id, local) {
         new Function(`return (function(props, currentDom, id){
             "use strict";
             ${scriptElement.textContent}
-        })`)()(props, domTree, ids);
+        })`)().bind({props, currentDom, id, window, global: window, local})();
     }
     
     function elemFromString(string) {

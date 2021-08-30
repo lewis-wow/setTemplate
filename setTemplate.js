@@ -7,6 +7,8 @@
 
     function setTemplate(file, props, container) {
         setTemplate.prototype.container = container || setTemplate.prototype.container;
+        const shadow = setTemplate.prototype.container.shadowRoot ? setTemplate.prototype.container.shadowRoot : setTemplate.prototype.container.attachShadow({mode: 'open'});
+
         return new Promise((resolve, reject) => {
             fetch(file).then(res => res.text()).then(res => {
     
@@ -44,12 +46,13 @@
                         }, null, null);
                     }
                 }
-                
-                while (setTemplate.prototype.container.firstChild) {
-                    setTemplate.prototype.container.removeChild(setTemplate.prototype.container.lastChild);
+
+                if(shadow) {
+                    while (shadow.firstChild) {
+                        shadow.removeChild(shadow.lastChild);
+                    }
                 }
 
-                const shadow = setTemplate.prototype.container.attachShadow({mode: 'open'});
                 shadow.appendChild(domTree);
 
                 resolve();

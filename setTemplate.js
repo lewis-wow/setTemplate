@@ -6,6 +6,7 @@
     'use strict';
 
     function setTemplate(file, props, container) {
+        const containerInit = setTemplate.prototype.container === undefined;
         setTemplate.prototype.container = container || setTemplate.prototype.container;
         const shadow = setTemplate.prototype.container.shadowRoot ? setTemplate.prototype.container.shadowRoot : setTemplate.prototype.container.attachShadow({mode: 'open'});
 
@@ -36,15 +37,15 @@
                         global: window,
                         asynchronnous: runAsFuncScript.hasAttribute("async") ? true : false
                     });
+                }
 
-                    const pushHistory = container === undefined && runAsFuncScript.getAttribute("history") !== "ignore" ? true : false;
+                const pushHistory = (container === undefined || containerInit) && (!runAsFuncScript || runAsFuncScript.getAttribute("history") !== "ignore") ? true : false;
                     
-                    if(pushHistory) {
-                        window.history.pushState({
-                            file,
-                            props
-                        }, null, null);
-                    }
+                if(pushHistory) {
+                    window.history.pushState({
+                        file,
+                        props
+                    }, null, null);
                 }
 
                 if(shadow) {

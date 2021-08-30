@@ -48,8 +48,10 @@
                 while (setTemplate.prototype.container.firstChild) {
                     setTemplate.prototype.container.removeChild(setTemplate.prototype.container.lastChild);
                 }
-                
-                setTemplate.prototype.container.appendChild(domTree);
+
+                const shadow = setTemplate.prototype.container.attachShadow({mode: 'open'});
+                shadow.appendChild(domTree);
+
                 resolve();
         
             });

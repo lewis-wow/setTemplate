@@ -5,7 +5,8 @@
 }(this, function() {
     'use strict';
 
-    function setTemplate(file, props) {
+    function setTemplate(file, props, container) {
+        setTemplate.prototype.container = container || setTemplate.prototype.container;
         return new Promise((resolve, reject) => {
             fetch(file).then(res => res.text()).then(res => {
     
@@ -24,20 +25,50 @@
 
                 const runAsFuncScript = domTree.querySelector("script:not([data-global='true'])");
                 if(runAsFuncScript) {
-                    runScriptAsFunction(runAsFuncScript, props, domTree, ids, window.local);
+                    runScriptAsFunction({
+                        script: runAsFuncScript, 
+                        props, 
+                        domTree, 
+                        id: ids, 
+                        local: window.local,
+                        global: window,
+                        asynchronnous: runAsFuncScript.hasAttribute("async") ? true : false
+                    });
+
+                    const pushHistory = container === undefined && runAsFuncScript.getAttribute("history") !== "ignore" ? true : false;
+                    
+                    if(pushHistory) {
+                        window.history.pushState({
+                            file,
+                            props
+                        }, null, null);
+                    }
                 }
-    
-                resolve(domTree);
+                
+                while (setTemplate.prototype.container.firstChild) {
+                    setTemplate.prototype.container.removeChild(setTemplate.prototype.container.lastChild);
+                }
+                
+                setTemplate.prototype.container.appendChild(domTree);
+                resolve();
         
             });
         });
     }
     
-    function runScriptAsFunction(scriptElement, props, currentDom, id, local) {
-        new Function(`return (function(props, currentDom, id){
+    function runScriptAsFunction({script, props, domTree, id, local, global, asynchronnous}) {
+        return new Function(`return (${asynchronnous ? "async " : ""}function(setTemplate){
             "use strict";
-            ${scriptElement.textContent}
-        })`)().bind({props, currentDom, id, window, global: window, local})();
+            ${script.textContent}
+        })`)().bind({
+            currentScript: script,
+            props, 
+            currentDom: domTree, 
+            id, 
+            global, 
+            local,
+            asynchronnous
+        })(setTemplate);
     }
     
     function elemFromString(string) {
@@ -54,6 +85,10 @@
         });
         return ids;
     }
+
+    window.addEventListener("popstate", (e) => {
+        setTemplate(e.state.file, e.state.props);
+    });
     
     return setTemplate;
     

@@ -7,7 +7,6 @@
 
     class Template {
         constructor(file, props = {}, shadow = document.currentScript.parentNode.attachShadow({mode: 'open'})) {
-            //const shadow = parentNode.attachShadow({mode: 'open'});
             return new Promise((resolve, reject) => {
                 setTemplate(file, props, shadow).then(([el, params]) => {
                     clearNode(shadow);
@@ -29,10 +28,8 @@
     function setTemplate(file, props, parentNode) {
         return new Promise((resolve, reject) => {
             fetch(file).then(res => res.text()).then(res => {
-    
                 const domTree = elemFromString(res);
                 const ids = getIds(domTree);
-
                 window.local = {};
 
                 const globalScript = domTree.querySelector("script[global]");
@@ -76,7 +73,8 @@
                         props,
                         currentDom: domTree,
                         id: ids,
-                        setContent
+                        setContent,
+                        elemFromString
                     });
                 }
                     

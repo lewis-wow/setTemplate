@@ -1,0 +1,24 @@
+{
+  "name": "simpletemplate",
+  "version": "1.0.0",
+  "description": "Create simple templates as in Svelte with script, markdown and scoped style with only 1.6kb library.",
+  "main": "setTemplate.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lewis-wow/setTemplate.git"
+  },
+  "keywords": [
+    "template",
+    "front-end",
+    "javascript"
+  ],
+  "author": "Ludvík Prokopec",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lewis-wow/setTemplate/issues"
+  },
+  "homepage": "https://github.com/lewis-wow/setTemplate#readme"
+}

@@ -1,15 +1,31 @@
 (function(global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
         typeof define === 'function' && define.amd ? define(factory) :
-        (global = global || self, global.setTemplate = factory());
+        (global = global || self, global.Template = factory());
 }(this, function() {
     'use strict';
 
-    function setTemplate(file, props, container) {
-        const containerInit = setTemplate.prototype.container === undefined;
-        setTemplate.prototype.container = container || setTemplate.prototype.container;
-        const shadow = setTemplate.prototype.container.shadowRoot ? setTemplate.prototype.container.shadowRoot : setTemplate.prototype.container.attachShadow({mode: 'open'});
+    class Template {
+        constructor(file, props, shadow = document.currentScript.parentNode.attachShadow({mode: 'open'})) {
+            //const shadow = parentNode.attachShadow({mode: 'open'});
+            return new Promise((resolve, reject) => {
+                setTemplate(file, props, shadow).then(el => {
+                    clearNode(shadow);
+                    shadow.appendChild(el);
+                    resolve(shadow);
+                });
+            });
+        }
+    }
 
+    function clearNode(node) {
+        while(node.firstChild) {
+            node.removeChild(node.lastChild);
+        }
+        return node;
+    }
+
+    function setTemplate(file, props, parentNode) {
         return new Promise((resolve, reject) => {
             fetch(file).then(res => res.text()).then(res => {
     
@@ -27,54 +43,46 @@
                 }
 
                 const runAsFuncScript = domTree.querySelector("script:not([data-global='true'])");
+                const history = {
+                    push: true
+                };
+
+                let onMountCallback = () => {};
+
                 if(runAsFuncScript) {
                     runScriptAsFunction({
-                        script: runAsFuncScript, 
+                        currentScript: runAsFuncScript, 
                         props, 
-                        domTree, 
+                        currentDom: domTree, 
                         id: ids, 
                         local: window.local,
                         global: window,
-                        asynchronnous: runAsFuncScript.hasAttribute("async") ? true : false
+                        async: runAsFuncScript.hasAttribute("async") ? true : false,
+                        history,
+                        parentNode,
+                        setContent: async (page, props) => new Template(page, props, parentNode),
+                        onMount: (callback) => onMountCallback = callback
                     });
                 }
-
-                const pushHistory = (container === undefined || containerInit) && (!runAsFuncScript || runAsFuncScript.getAttribute("history") !== "ignore") ? true : false;
                     
-                if(pushHistory) {
+                if(history.push) {
                     window.history.pushState({
                         file,
                         props
                     }, null, null);
                 }
 
-                if(shadow) {
-                    while (shadow.firstChild) {
-                        shadow.removeChild(shadow.lastChild);
-                    }
-                }
-
-                shadow.appendChild(domTree);
-
-                resolve();
-        
+                resolve(domTree);
+                onMountCallback();
             });
         });
     }
     
-    function runScriptAsFunction({script, props, domTree, id, local, global, asynchronnous}) {
-        return new Function(`return (${asynchronnous ? "async " : ""}function(setTemplate){
+    function runScriptAsFunction(params) {
+        return new Function(`return (${params.async ? "async " : ""}function(){
             "use strict";
-            ${script.textContent}
-        })`)().bind({
-            currentScript: script,
-            props, 
-            currentDom: domTree, 
-            id, 
-            global, 
-            local,
-            asynchronnous
-        })(setTemplate);
+            ${params.currentScript.textContent}
+        })`)().bind(params)();
     }
     
     function elemFromString(string) {
@@ -96,6 +104,6 @@
         setTemplate(e.state.file, e.state.props);
     });
     
-    return setTemplate;
+    return Template;
     
 }));

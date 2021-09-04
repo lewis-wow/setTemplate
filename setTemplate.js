@@ -6,15 +6,16 @@
     'use strict';
 
     class Template {
-        constructor(file, props, shadow = document.currentScript.parentNode.attachShadow({mode: 'open'})) {
+        constructor(file, props = {}, shadow = document.currentScript.parentNode.attachShadow({mode: 'open'})) {
             //const shadow = parentNode.attachShadow({mode: 'open'});
             return new Promise((resolve, reject) => {
-                setTemplate(file, props, shadow).then(el => {
+                setTemplate(file, props, shadow).then(([el, params]) => {
                     clearNode(shadow);
                     shadow.appendChild(el);
-                    resolve(shadow);
+                    resolve(params);
                 });
             });
+
         }
     }
 
@@ -44,24 +45,38 @@
 
                 const runAsFuncScript = domTree.querySelector("script:not([data-global='true'])");
                 const history = {
-                    push: true
+                    push: false
                 };
 
                 let onMountCallback = () => {};
 
+                const setContent = async (page, props) => new Template(page, props, parentNode);
+
+                function style(el, styles) {
+                    let result = "";
+                    for(const [k, v] of Object.entries(styles)) {
+                        result += `${k}: ${v};`
+                    }
+                    el.style.cssText = result;
+                    return result;
+                }
+
+                let resultFromScript = null;
+
                 if(runAsFuncScript) {
-                    runScriptAsFunction({
+                    resultFromScript = runScriptAsFunction({
                         currentScript: runAsFuncScript, 
-                        props, 
-                        currentDom: domTree, 
-                        id: ids, 
                         local: window.local,
                         global: window,
                         async: runAsFuncScript.hasAttribute("async") ? true : false,
                         history,
                         parentNode,
-                        setContent: async (page, props) => new Template(page, props, parentNode),
-                        onMount: (callback) => onMountCallback = callback
+                        onMount: (callback) => onMountCallback = callback,
+                        style,
+                        props,
+                        currentDom: domTree,
+                        id: ids,
+                        setContent
                     });
                 }
                     
@@ -72,7 +87,7 @@
                     }, null, null);
                 }
 
-                resolve(domTree);
+                resolve([domTree, resultFromScript]);
                 onMountCallback();
             });
         });

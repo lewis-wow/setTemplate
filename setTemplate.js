@@ -32,23 +32,15 @@
                 const ids = getIds(domTree);
                 window.local = {};
 
-                const globalScript = domTree.querySelector("script[global]");
-                if(globalScript) {
+                Array.from(domTree.querySelectorAll("script[global]")).forEach(globalScript => {
                     const script = document.createElement("script");
                     script.textContent = globalScript.textContent;
                     script.dataset.global = true;
                     globalScript.replaceWith(script);
-                }
+                });
 
-                const runAsFuncScript = domTree.querySelector("script:not([data-global='true'])");
-                const history = {
-                    push: false
-                };
-
-                let onMountCallback = () => {};
-
+                let resultFromScript = {};
                 const setContent = async (page, props) => new Template(page, props, parentNode);
-
                 function style(el, styles) {
                     let result = "";
                     for(const [k, v] of Object.entries(styles)) {
@@ -57,11 +49,15 @@
                     el.style.cssText = result;
                     return result;
                 }
+                const history = {
+                    push: false
+                };
 
-                let resultFromScript = null;
+                let mountCallbacks = [];
+                Array.from(domTree.querySelectorAll("script:not([data-global='true'])")).forEach(runAsFuncScript => {
+                    let onMountCallback = () => {};
 
-                if(runAsFuncScript) {
-                    resultFromScript = runScriptAsFunction({
+                    let resultFromCurrentScript = runScriptAsFunction({
                         currentScript: runAsFuncScript, 
                         local: window.local,
                         global: window,
@@ -76,7 +72,10 @@
                         setContent,
                         elemFromString
                     });
-                }
+
+                    Object.assign(resultFromScript, resultFromCurrentScript || {});
+                    mountCallbacks.push(onMountCallback);
+                });
                     
                 if(history.push) {
                     window.history.pushState({
@@ -86,7 +85,7 @@
                 }
 
                 resolve([domTree, resultFromScript]);
-                onMountCallback();
+                mountCallbacks.forEach(cb => cb());
             });
         });
     }

@@ -7,6 +7,9 @@
 
     class Template {
         constructor(file, props = {}, shadow = document.currentScript.parentNode.attachShadow({mode: 'open'})) {
+            if(!shadow.host) {
+                shadow = shadow.attachShadow({mode: 'open'});
+            }
             return new Promise((resolve, reject) => {
                 setTemplate(file, props, shadow).then(([el, params]) => {
                     clearNode(shadow);

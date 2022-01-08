@@ -50,7 +50,7 @@ Its lightweight library (1.6kb) that can be used with any other library such as 
 
 ### header.html
 ```
-<!-- scoped script, can be only one local like this and one global -->
+<!-- scoped script, its context is template context -->
 <script>
     console.log(this); //special local component context
 
@@ -65,6 +65,7 @@ Its lightweight library (1.6kb) that can be used with any other library such as 
     };
 </script>
 
+<!-- global script, its context is window -->
 <script global>
     console.log(this); //window
 </script>
@@ -75,9 +76,9 @@ Its lightweight library (1.6kb) that can be used with any other library such as 
     <li>3</li>
     <li>4</li>
 </ul>
-<!-- scoped style for this component only -->
+<!-- scoped style for this template only -->
 <style>
-    ul {
+    ul { /* this ul style cannot overwrite another ul style in another template */
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         align-items: center;

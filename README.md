@@ -23,7 +23,8 @@ Its lightweight library (1.6kb) that can be used with any other library such as 
     <header>
         <script>
             const headerTemplate = new Template("header.html");
-            //template from file will be auto inserted ti the element where was called
+            //template from the file will be auto inserted to the element where the Template constructor was called
+            //header.html will be in header THIS header parent
         </script>
     </header>
 
